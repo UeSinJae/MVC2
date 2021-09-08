@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" id="WebApp_ID" version="3.1">
+  <display-name>Chapter9_예외처리</display-name>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.htm</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>default.html</welcome-file>
+    <welcome-file>default.htm</welcome-file>
+    <welcome-file>default.jsp</welcome-file>
+  </welcome-file-list>
+  
+  <!-- 404와 500 오류 발생 시 예외 처리 할 페이지를 지정함 -->
+  <error-page>
+  	<error-code>404</error-code>
+  	<location>/error404.jsp</location>
+  </error-page>
+
+  <error-page>
+  	<error-code>500</error-code>
+  	<location>/error500.jsp</location>
+  </error-page> 
+  
+  <!-- NullPonintException예외의 경우는 자주 발생하는 예외 타입이므로
+  web.xml에 지정하는 것이 효율적 -->
+  <error-page>
+  	<exception-type>java.iang.NullPointerException</exception-type>
+  	<location>/null.jsp</location>
+  </error-page>
+  
+   
+</web-app>
