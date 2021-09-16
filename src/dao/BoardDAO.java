@@ -102,6 +102,7 @@ public class BoardDAO {
 		return listCount;
 	}
 	
+	//3.해당 페이지에 출력될 글 목록을 DB에서 조회하여 ArrayList<BoardBean>객체 반환
 	public ArrayList<BoardBean> selectArticleList(int page, int limit){
 		ArrayList<BoardBean> articleList = new ArrayList<BoardBean>();
 		/* board_re_ref : 같은 수는 같은 그룹
@@ -141,7 +142,7 @@ public class BoardDAO {
 				
 				articleList.add(boardBean);
 			}
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			//e.printStackTrace();
 			System.out.println("getBoardList 에러 : "+e);//e:예외종류+예외메세지
 		}finally {
@@ -151,8 +152,224 @@ public class BoardDAO {
 		return articleList;
 	}
 	
+	//4. 글번호로 해당글을 조회하여 조회수 1증가
+	public int updateReadCount(int board_num) {
+		int updateCount = 0;//지역변수 초기화
+		String sql = "update board set board_readcount=board_readcount+1 where board_num="+board_num;
+		try {
+			pstmt = con.prepareStatement(sql);
+			updateCount = pstmt.executeUpdate();
+		} catch (Exception e) {
+			//e.printStackTrace();
+			System.out.println("setReadCountUpdate 에러 : "+e);//e:예외종류+예외메세지
+		}finally {
+//			close(rs);
+			close(pstmt);
+		}
+		return updateCount;
+	}
 	
+	//5.글번호로 글 하나의 정보를 조회해서 BoardBean객체로 반환
+	public BoardBean selectArticle(int board_num) {
+		BoardBean boardBean = null;
+		
+//		String sql = "select * from board where board_num="+board_num;
+		String sql = "select * from board where board_num=?";
+		try {
+			pstmt = con.prepareStatement(sql);
+			pstmt.setInt(1, board_num);
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				boardBean = new BoardBean();//기본값으로 채워진 BoardBean객체를
+				//조회한 결과값으로 채움
+				boardBean.setBoard_num(rs.getInt("board_num"));
+				boardBean.setBoard_name(rs.getString("board_name"));
+				boardBean.setBoard_subject(rs.getString("board_subject"));
+				boardBean.setBoard_content(rs.getString("board_content"));
+				boardBean.setBoard_file(rs.getString("board_file"));
+				boardBean.setBoard_re_ref(rs.getInt("board_re_ref"));
+				boardBean.setBoard_re_lev(rs.getInt("board_re_lev"));
+				boardBean.setBoard_re_seq(rs.getInt("board_re_seq"));
+				boardBean.setBoard_readcount(rs.getInt("board_readcount"));
+				boardBean.setBoard_date(rs.getDate("board_date"));
+			}
+		} catch (Exception e) {
+			//e.printStackTrace();
+			System.out.println("getDetail 에러 : "+e);//e:예외종류+예외메세지
+		}finally {
+			close(rs);
+			close(pstmt);
+		}
+		
+		return boardBean;
+	}
 	
+	//6.답변글쓰기 폼에서 답변관련 내용을 담은 BoardBean객체를 board테이블에 추가
+	//글쓴이,비밀번호,제목,내용만 답변글 정보이고 나머지 값(글번호,그룹,들여쓰기,위치)들은 원글의 내용 그대로
+	public int insertReplyArticle(BoardBean article){
+//		String board_max_sql = "select max(board_num) from board";//교재내용
+		String board_max_sql = "select IFNULL(max(board_num),0)+1 from board";
+		int num = 0;		
+		String sql="";
+		int re_ref = article.getBoard_re_ref();//원글의 그룹번호
+		int re_seq = article.getBoard_re_seq();//원글에서 답변글이 몇번째 아래에 놓일 것인지 위치를 결정해주는 값
+		int re_lev = article.getBoard_re_lev();//들여쓰기
+		
+		int insertCount = 0;
+		
+		try {
+			pstmt=con.prepareStatement(board_max_sql);
+			rs = pstmt.executeQuery();
+			
+	//		if(rs.next()) num = rs.getInt(1)+1;//->교재내용
+	//		else num = 1;//아무글도 없으면 답변글번호를 1로시작->교재내용
+			if(rs.next()) num=rs.getInt(1);//num:답변글번호
+			
+			/* ★★최신답변글을 원글 바로 아래로 위치하도록 하기 위해
+			 * 원글의 답변글만 찾아서 board_re_seq를 각각 1증가
+			 * 
+			 * (예)원글 0     원글0      원글0
+			 * --------------------
+			 * 			      - 답변글1(최신답변)
+			 *   답변글 1->답변글2->답변글2
+			 *   답변글 1->답변글2->답변글2
+			 * 
+			 * (예2)
+			 *     답변글 1     답변글1      답변들1
+			 *--------------------
+			 * 			      - 답변글2(최신답변)
+			 *   답변글 2->답변글3->답변글3
+			 *   답변글 2->답변글3->답변글3
+			 * 
+			 */
+			sql="update board set board_re_seq=board_re_seq+1 where board_re_ref=? and board_re_seq > ?";
+			pstmt=con.prepareStatement(sql);
+			pstmt.setInt(1, re_ref);//원글의 그룹번호
+			pstmt.setInt(2, re_seq);//원글의 위치
+			int updateCount = pstmt.executeUpdate();//업데이트가 성공하면 1을 리턴받음
+			
+			if(updateCount > 0) commit(con);
+			else rollback(con);
+			
+			/********************답변글 등록*************************/
+			re_lev=re_lev+1;//원글레벨(0)+1 원글레벨(1)+1
+			re_seq=re_seq+1;//원글위치(0)+1 원글위치(1)+1
+			
+			//★ sql+=""; 하면안됨
+			sql="insert into board values(?,?,?,?,?,?,?,?,?,?,now())";
+			pstmt=con.prepareStatement(sql);
+			pstmt.setInt(1, num);//위에서 계산한 답변글번호
+			
+			//아래 4개의 값(글쓴이,비번,제목,내용)은 전송받은 값을 그대로 가져와
+			pstmt.setString(2, article.getBoard_name());
+			pstmt.setString(3, article.getBoard_pass());
+			pstmt.setString(4, article.getBoard_subject());
+			pstmt.setString(5, article.getBoard_content());
+			
+			pstmt.setString(6,"");//답변글 폼에서 파일을 업로드하는 부분이 없음
+			
+			pstmt.setInt(7, re_ref);//원글과 같은 그룹번호
+			pstmt.setInt(8, re_lev);//원글+1
+			pstmt.setInt(9, re_seq);//원글+1(원글바로아래에위치ㄹ함)
+			
+			pstmt.setInt(10, 0);//죄회수
+			
+			insertCount = pstmt.executeUpdate();
+		}catch (Exception e) {
+			//e.printStackTrace();
+			System.out.println("boardReply 에러 : "+e);//e:예외종류+예외메세지
+		}finally {
+			close(rs);
+			close(pstmt);
+		}
+		return insertCount;
+	}
+	
+	//7.(글번호와 입력한 비번을 매개값으로)현재 사용자가 글쓴이인지 확인 
+	public boolean isArticleBoardWriter(int board_num, String pass) {
+//		String board_sql = "select * from board where board_num=?";
+		String board_sql = "select * from board where board_num="+board_num;
+		boolean isWriter = false;
+		try {
+			pstmt = con.prepareStatement(board_sql);
+//			pstmt.setInt(1, board_num);
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				//사용자가 입려한 비번과 글번호로 조회한 비번이 같으면
+				if(pass.equals(rs.getString("board_pass"))) {
+					isWriter = true;
+				}
+			}
+			
+		} catch (Exception e) {
+			//e.printStackTrace();
+			System.out.println("isBoardWriter 에러 : "+e);//e:예외종류+예외메세지
+		}finally {
+			close(rs);
+			close(pstmt);
+		}
+		
+		
+		return isWriter;
+	}
+
+	//8.파라미터로 전송된 수정 정보인 article을 매개값으로 받아 글을 수정한다.
+	public int updateArticle(BoardBean article) {
+		String sql="update board set board_subject=?,board_content=? where board_num=?";
+		int updateCount = 0;
+		try {
+			pstmt = con.prepareStatement(sql);
+			pstmt.setString(1, article.getBoard_subject());
+			pstmt.setString(2, article.getBoard_content());
+			pstmt.setInt(3, article.getBoard_num());
+			
+			updateCount = pstmt.executeUpdate();
+		} catch (Exception e) {
+			//e.printStackTrace();
+			System.out.println("BoardModify 에러 : "+e);//e:예외종류+예외메세지
+		}finally {
+//			close(rs);
+			close(pstmt);
+		}
+		
+		
+		return updateCount;
+	}
+
+	//9.글삭제
+	public int deleteArticle(int board_num) {
+		String sql = "delete from board where board_num="+board_num;
+		int deleteCount = 0;
+		try {
+			pstmt = con.prepareStatement(sql);
+			deleteCount = pstmt.executeUpdate();
+			
+		} catch (Exception e) {
+			System.out.println("BoardDelete 에러 : "+e);//e:예외종류+예외메세지
+		}finally {
+//			close(rs);
+			close(pstmt);
+		}
+		return deleteCount;
+	}
 	
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

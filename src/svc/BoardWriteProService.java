@@ -14,7 +14,7 @@ import dao.BoardDAO;
 public class BoardWriteProService {
 	//기본생성자
 	
-	public boolean registArticle(BoardBean boardBean){
+	public boolean registArticle(BoardBean boardBean) throws Exception{
 		// 커넥션풀에서 DB를 연결하기 위한 Connection객체를 얻어와
 		Connection con = getConnection();//JdbcUtil.getConnection();//클래스명.static메서드 호출
 		

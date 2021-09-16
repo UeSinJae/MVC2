@@ -22,7 +22,7 @@ public class BoardListService {
 	}
 
 	//페이지 번호와 한 페이지당 출력될 글의 개수10을 전송 받아 지정한 페이지에 출력될 글 목록을 ArrayList<BoardBean> 객체 반환
-	public ArrayList<BoardBean> getArticleList(int page, int limit) {
+	public ArrayList<BoardBean> getArticleList(int page, int limit) throws Exception{
 		Connection con  = getConnection();
 		BoardDAO boardDAO = BoardDAO.getInstance();
 		boardDAO.setConnection(con);

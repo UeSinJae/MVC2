@@ -10,7 +10,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import action.Action;
+import action.BoardDeleteProAction;
+import action.BoardDetailAction;
+import action.BoardReplyAction;
+import action.BoardReplyProAction;
 import action.BoardWriteProAction;
+import action.BoardboardModifyFormAction;
+import action.BoardModifyProAction;
 import vo.ActionForward;
 
 /**
@@ -91,7 +97,72 @@ public class BoardFrontController extends HttpServlet {
 				e.printStackTrace();
 			}
 		}
-		
+		else if(command.equals("/boardDetail.bo")) {//하나의 글 내용만 보여주는 글 내용 상세보기 화면
+			
+			action = new BoardDetailAction();
+			try {
+				forward = action.execute(request, response);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else if(command.equals("/boardReplyForm.bo")) {//답변쓰기 폼을 보여주는 요청이면			
+			action = new BoardReplyAction();
+			try {
+				forward = action.execute(request, response);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else if(command.equals("/boardReplyPro.bo")) {//답변정보를 등록하기 위한 처리 요청이면			
+			action = new BoardReplyProAction();
+			try {
+				forward = action.execute(request, response);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else if(command.equals("/boardModifyForm.bo")) {//글수정 폼화면 보기 요청이면			
+			action = new BoardboardModifyFormAction();
+			try {
+				forward = action.execute(request, response);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else if(command.equals("/boardModifyPro.bo")) {//글수정 폼화면 보기 요청이면			
+			action = new BoardModifyProAction();
+			try {
+				forward = action.execute(request, response);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		/* 647p 두번째 그림참조
+		 * 게시판 삭제를 위해 비밀번호를 입력하는 페이지로 이동하는데
+		 * 이때, 해당 페이지 번호와 글번호를 요청영역에 속성값으로 공유한 후
+		 * 
+		 * 바로 디스패치방식으로 뷰페이지로 이동
+		 * 
+		 */
+		else if(command.equals("/boardDeleteForm.bo")) {//글삭제 폼화면 보기 요청이면
+			String nowPage = request.getParameter("page");
+			request.setAttribute("page", nowPage);
+			
+			int board_num = Integer.parseInt(request.getParameter("board_num"));
+			request.setAttribute("board_num", board_num);
+			
+			 forward = new ActionForward();
+			 forward.setPath("/board/qna_board_delete.jsp");
+		}
+		else if(command.equals("/boardDeletePro.bo")) {//글삭제 처리 요청이면
+			action = new BoardDeleteProAction();
+			try {
+				forward = action.execute(request, response);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 		/******************************************************************
 		 *포워딩
 		 * 

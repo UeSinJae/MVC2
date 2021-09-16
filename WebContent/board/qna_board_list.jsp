@@ -1,20 +1,20 @@
 <!-- 전체 게시판 글목록을 보여주는 뷰페이지	 -->
 <%@page import="vo.PageInfo"%>
-<%@page import="vo.BoardBean" %>
+<%@page import="vo.Dog" %>
 <%@page import="java.util.*" %>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
  <%
- //request영역에 공유한 pageInfo와 articleList속성값을 얻어옴
- PageInfo pageInfo = (PageInfo)request.getAttribute("pageInfo");
- ArrayList<BoardBean> articleList = (ArrayList<BoardBean>)request.getAttribute("articleList");
- 
- //페이징 처리 관련 정보를 사용하기 편하도록 각 변수에 저장함
- int nowPage = pageInfo.getPage();//페이지번호
- int listCount = pageInfo.getListCount();//게시판의 총 글의 개수
- int maxPage = pageInfo.getMaxPage();//총 페이지수
- int startpage = pageInfo.getStartPage();//현재 페이지에 보여줄 시작 페이지 수
- int endPage = pageInfo.getEndPage();//현재 페이지에 보여줄 마지막 페이지 수 
+ 	//request영역에 공유한 pageInfo와 articleList속성값을 얻어옴
+  PageInfo pageInfo = (PageInfo)request.getAttribute("pageInfo");
+  ArrayList<Dog> articleList = (ArrayList<Dog>)request.getAttribute("articleList");
+  
+  //페이징 처리 관련 정보를 사용하기 편하도록 각 변수에 저장함
+  int nowPage = pageInfo.getPage();//페이지번호
+  int listCount = pageInfo.getListCount();//게시판의 총 글의 개수
+  int maxPage = pageInfo.getMaxPage();//총 페이지수
+  int startpage = pageInfo.getStartPage();//현재 페이지에 보여줄 시작 페이지 수
+  int endPage = pageInfo.getEndPage();//현재 페이지에 보여줄 마지막 페이지 수
  %>
 <!DOCTYPE html>
 <html>
